@@ -263,6 +263,7 @@
     <button class="tbtn" onclick="openRejected()">被拒Offer<span class="badge" id="rejBadge">0</span></button>
     <button class="tbtn" onclick="openAcct()" id="acctBtn">登录</button>
     <button class="tbtn" onclick="openFb()">反馈</button>
+    <button class="tbtn" onclick="openPrivacy()">隐私</button>
     <button class="tbtn" onclick="downloadHTML()">网页备份</button>
     <button class="tbtn" onclick="exportJSON()">数据备份</button>
     <button class="tbtn" onclick="importJSON()">数据恢复</button>
@@ -328,7 +329,7 @@
   <div class="modal" style="max-width:380px">
     <div id="acctOut">
       <h3>欢迎使用 JobHunting <button class="x" id="acctX" onclick="closeAcct()" style="display:none">×</button></h3>
-      <div style="font-size:13px;color:var(--sub);margin:4px 0 12px;line-height:1.6">登录后记录自动云端同步：手机、电脑、微信登同一账号即同一份数据。<b>账号暂不支持找回密码，请妥善保管。</b></div>
+      <div style="font-size:13px;color:var(--sub);margin:4px 0 12px;line-height:1.6">登录后记录自动云端同步：手机、电脑、微信登同一账号即同一份数据。<b>账号暂不支持找回密码，请妥善保管。</b>数据加密传输存储于云端你自己的账号下，开发者承诺不查看记录内容（详见顶栏「隐私」）。</div>
       <div class="grid">
         <div class="field full"><label>账号名</label><input id="ac-user" placeholder="3-20 位字母/数字/下划线" autocomplete="username"></div>
         <div class="field full"><label>密码</label><input id="ac-pass" type="password" placeholder="至少 6 位" autocomplete="current-password"></div>
@@ -364,6 +365,40 @@
       <div class="field full"><label>联系方式（可选）</label><input id="fb-contact" placeholder="微信 / 邮箱，便于回访"></div>
     </div>
     <button class="save-btn" style="margin-top:12px" onclick="sendFb()">提交</button>
+  </div>
+</div>
+
+<!-- 隐私声明弹窗 -->
+<div class="modal-mask" id="pvMask" onclick="if(event.target===this)closePrivacy()">
+  <div class="modal" style="max-width:480px;max-height:80vh;overflow-y:auto">
+    <h3>隐私声明 <button class="x" onclick="closePrivacy()">×</button></h3>
+    <div style="font-size:13.5px;line-height:1.8;color:var(--ink)">
+      <b>我们会保存哪些数据</b>
+      <ul style="margin:6px 0 14px;padding-left:18px">
+        <li>你的求职记录：岗位信息（公司、岗位、薪资、要求）、面试记录与复盘笔记、Offer 信息、重要事项、日程提醒</li>
+        <li>账号名（仅用于登录，不含手机号或真实邮箱）</li>
+        <li>你主动提交的反馈（内容与你选填的联系方式）</li>
+        <li>页面运行报错信息（错误内容、浏览器型号、页面地址），用于排查故障；不含你的记录内容</li>
+      </ul>
+      <b>存在哪里 · 谁能看</b>
+      <ul style="margin:6px 0 14px;padding-left:18px">
+        <li>未登录：全部记录只存在这台设备的浏览器里，不上传任何服务器。</li>
+        <li>登录后：记录同步存储在云端你自己的账号下，其他用户看不到；开发者为提供和维护服务在技术上可以访问，但<b>承诺不查看你的记录内容</b>，日常仅查看反馈与报错信息。</li>
+      </ul>
+      <b>AI 识别与第三方</b>
+      <ul style="margin:6px 0 14px;padding-left:18px">
+        <li>使用「识别并填充」时，你粘贴的职位描述文本会发给第三方 AI 服务（智谱）处理以提取字段；不用它做识别就不会发送。</li>
+        <li>「截图识别」的图片在你的设备本地完成文字识别，<b>图片本身不会上传</b>；识别出的文字仅在你继续使用 AI 识别时发送。</li>
+        <li>JobHunting 不会用你的数据训练 AI 模型。内容到达第三方后如何处理，由该服务商自己的政策决定，我们无法代其承诺。</li>
+      </ul>
+      <b>保留多久 · 你能做什么</b>
+      <ul style="margin:6px 0 14px;padding-left:18px">
+        <li>记录会持续保留（求职复盘需要看历史）；你在应用内删除的内容会同步从云端删除。</li>
+        <li>随时可用「数据备份」导出全部记录，或「清空数据」删除本机及云端记录。</li>
+        <li>需要注销账号并删除云端全部数据，请通过「反馈」告诉我们，会在处理后回复。</li>
+      </ul>
+      <div style="color:var(--sub);font-size:12.5px">涉及隐私的信息（如内推人姓名、谈薪细节）请自行斟酌填写。JobHunting 目前处于内测阶段，功能与数据处理方式可能调整，重大变更会在此页更新。</div>
+    </div>
   </div>
 </div>
 
@@ -879,6 +914,8 @@ async function pullData(){
 }
 async function manualSync(){toast('同步中…');await pushData();await pullData();toast('同步完成');}
 /* 反馈 */
+function openPrivacy(){document.getElementById('pvMask').classList.add('show');}
+function closePrivacy(){document.getElementById('pvMask').classList.remove('show');}
 function openFb(){document.getElementById('fbMask').classList.add('show');}
 function closeFb(){document.getElementById('fbMask').classList.remove('show');}
 async function sendFb(){

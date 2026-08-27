@@ -8,7 +8,7 @@
 <title>JobHunting</title>
 <style>
   :root{
-    --bg:#f3f2ee; --card:#ffffff; --ink:#2e333d; --sub:#7a8089; --line:#e6e4de;
+    --bg:#f3f2ee; --card:#ffffff; --ink:#3b352f; --sub:#8b8178; --line:#e6e4de;
     --pri:#7895a2; --pri2:#a3b8c2; --ok:#8fae9a; --warn:#c9a66b; --danger:#c1766b;
     --st-todo:#9bb5c4; --st-sent:#8b9dbb; --st-offer:#8fae9a; --st-reject:#aba69e;
     --shadow:0 2px 12px rgba(31,36,48,.06);
@@ -639,11 +639,12 @@ function lighten(hex,amt){
 }
 function curTheme(){try{return JSON.parse(localStorage.getItem(THEME_KEY)||"{}");}catch(e){return {};}}
 const TONES={
-  cloud:{surf:'#e7eaef',shd:'rgba(139,151,167,.5)'},
-  warm:{surf:'#ece7e1',shd:'rgba(166,152,141,.5)'},
-  sage:{surf:'#e5eae5',shd:'rgba(140,157,146,.5)'},
-  rose:{surf:'#ede5e6',shd:'rgba(173,148,152,.5)'}
+  cloud:{surf:'#e7eaef',shd:'rgba(139,151,167,.5)',ink:'#2e333d',sub:'#7a8089'},
+  warm:{surf:'#ece7e1',shd:'rgba(166,152,141,.5)',ink:'#3b352f',sub:'#8b8178'},
+  sage:{surf:'#e5eae5',shd:'rgba(140,157,146,.5)',ink:'#303830',sub:'#7c857b'},
+  rose:{surf:'#ede5e6',shd:'rgba(173,148,152,.5)',ink:'#3a3134',sub:'#8b7d80'}
 };
+function inkFrom(){return {ink:'#38342f',sub:'#86807a'};}
 function shadowFrom(hex){hex=hex.replace('#','');if(hex.length===3)hex=hex.split('').map(c=>c+c).join('');
   const r=Math.round(parseInt(hex.slice(0,2),16)*.72),g=Math.round(parseInt(hex.slice(2,4),16)*.72),b=Math.round(parseInt(hex.slice(4,6),16)*.72);
   return 'rgba('+r+','+g+','+b+',.5)';}
@@ -655,11 +656,11 @@ function applyTheme(){
   root.setProperty("--pri",accent);
   root.setProperty("--pri2",accent2);
   document.body.classList.toggle("theme-dark",s.theme==="dark");
-  let surf,shd;
-  if(s.tone==='custom'&&s.toneColor){surf=s.toneColor;shd=shadowFrom(s.toneColor);}
-  else{const t=TONES[s.tone||'warm']||TONES.warm;surf=t.surf;shd=t.shd;}
-  if(s.theme==="dark"){root.removeProperty("--surf");root.removeProperty("--sh-d");}
-  else{root.setProperty("--surf",surf);root.setProperty("--sh-d",shd);}
+  let surf,shd,ink,sub;
+  if(s.tone==='custom'&&s.toneColor){surf=s.toneColor;shd=shadowFrom(s.toneColor);const n=inkFrom();ink=n.ink;sub=n.sub;}
+  else{const t=TONES[s.tone||'warm']||TONES.warm;surf=t.surf;shd=t.shd;ink=t.ink;sub=t.sub;}
+  if(s.theme==="dark"){["--surf","--sh-d","--ink","--sub"].forEach(v=>root.removeProperty(v));}
+  else{root.setProperty("--surf",surf);root.setProperty("--sh-d",shd);root.setProperty("--ink",ink);root.setProperty("--sub",sub);}
   root.setProperty("--font",FONTS[s.font||"sans"]);
   if(!s.accent2){s.accent2=accent2;try{localStorage.setItem(THEME_KEY,JSON.stringify(s));}catch(e){}}
 }

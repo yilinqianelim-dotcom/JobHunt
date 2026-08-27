@@ -301,6 +301,12 @@
   <div class="panel" id="sched">
     <h2>日程 <button class="ph-act" onclick="openModal('reminder')">＋ 添加提醒</button></h2>
     <div id="schedList"></div>
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:10px 0 8px;font-size:13px;color:var(--sub)">
+      <span>投递前提醒</span>
+      <select id="leadSel" style="width:auto;padding:5px 9px" onchange="setLead(this.value)"><option value="3">提前 3 天</option><option value="7">提前 7 天</option><option value="14">提前 14 天</option></select>
+      <span>提醒频率</span>
+      <select id="freqSel" style="width:auto;padding:5px 9px" onchange="setFreq(this.value)"><option value="daily">每天</option><option value="alt">隔天</option></select>
+    </div>
     <button class="panel-act" onclick="exportICS()">导出到系统日历</button>
   </div>
 
@@ -1207,13 +1213,20 @@ function openRejected(){
 }
 function closeRejected(){document.getElementById('rejMask').classList.remove('show');}
 
+/* 日程提醒设置 */
+function getLead(){const v=parseInt(lsGet(PREFIX+'remind_lead')||'7',10);return [3,7,14].includes(v)?v:7;}
+function getFreq(){const v=lsGet(PREFIX+'remind_freq');return v==='alt'?'alt':'daily';}
+function setLead(v){lsSet(PREFIX+'remind_lead',String(v));renderSched();toast('已设置提前 '+v+' 天');}
+function setFreq(v){lsSet(PREFIX+'remind_freq',v);toast(v==='alt'?'已设为隔天提醒':'已设为每天提醒');}
 /* 日程提醒：自动 + 手动 */
 function renderSched(){
+  const _l=document.getElementById('leadSel');if(_l)_l.value=String(getLead());
+  const _f=document.getElementById('freqSel');if(_f)_f.value=getFreq();
   const today=todayStr();
   const items=[];
   load('jobs').forEach(j=>{
     if(j.stage==='已Offer'&&j.offerRejected)return;
-    if(j.stage==='待投递'&&j.date){items.push({date:shift(j.date,-14),kind:'prep',title:'提前两周准备投递',co:j.company,sub:j.position+' · 投递日 '+fmtMD(j.date)});}
+    if(j.stage==='待投递'&&j.date&&j.date>=today){let ps=shift(j.date,-getLead());if(ps<today)ps=today;items.push({date:ps,kind:'prep',title:'提前 '+getLead()+' 天准备投递',co:j.company,sub:j.position+' · 投递日 '+fmtMD(j.date)});}
     if(j.needOpt){items.push({date:today,kind:'opt',title:'优化简历',co:j.company,sub:j.position+' · '+(j.optNote||'需优化简历')});}
     if(j.follow){items.push({date:j.follow,kind:'follow',title:'跟进',co:j.company,sub:j.position});}
     if(j.iv&&j.iv.rounds)j.iv.rounds.forEach(r=>{if(r.date)items.push({date:r.date,kind:'iv',title:'面试',co:j.company,sub:j.position+' · '+r.round+' · '+r.type});});
@@ -1253,27 +1266,30 @@ function exportICS(){
     L.push("SUMMARY:"+X(summary),"DESCRIPTION:"+X(desc),
       "BEGIN:VALARM","TRIGGER:"+alarmTrigger,"ACTION:DISPLAY","DESCRIPTION:"+X(alarmDesc),"END:VALARM","END:VEVENT");
   };
+  const lead=getLead();
+  const FR='FREQ=DAILY'+(getFreq()==='alt'?';INTERVAL=2':'');
+  const clamp=s=>s<today?today:s;
   load('jobs').forEach(j=>{
     if(j.stage==='已Offer'&&j.offerRejected)return;
-    if(j.stage==='待投递'&&j.date)
-      EV(j.id+"-prep",["DTSTART:"+DT(shift(j.date,-14)),"RRULE:FREQ=DAILY;UNTIL="+DT(j.date)],
-        "准备投递 "+j.company+"·"+(j.position||""),"距离投递开放还有两周，开始准备简历","-PT0M","准备投递 "+j.company);
+    if(j.stage==='待投递'&&j.date&&j.date>=today)
+      EV(j.id+"-prep",["DTSTART:"+DT(clamp(shift(j.date,-lead))),"RRULE:"+FR+";UNTIL="+DT(j.date)],
+        "准备投递 "+j.company+"·"+(j.position||""),"距离投递还有不到 "+lead+" 天，开始准备","-PT0M","准备投递 "+j.company);
     if(j.needOpt)
-      EV(j.id+"-opt",["DTSTART:"+DT(today),"RRULE:FREQ=DAILY;UNTIL="+DT(shift(today,14))],
+      EV(j.id+"-opt",["DTSTART:"+DT(today),"RRULE:"+FR+";UNTIL="+DT(shift(today,lead))],
         "优化简历 "+j.company+"·"+(j.position||""),(j.optNote||'需要优化简历'),"-PT0M","优化简历 "+j.company);
-    if(j.follow)
+    if(j.follow&&j.follow>=today)
       EV(j.id+"-follow",["DTSTART:"+DT(j.follow)],
         "跟进 "+j.company+"·"+(j.position||""),(j.note||'下次跟进'),"-PT0M","跟进 "+j.company);
-    if(j.iv&&j.iv.rounds)j.iv.rounds.forEach((r,ri)=>{if(r.date)
+    if(j.iv&&j.iv.rounds)j.iv.rounds.forEach((r,ri)=>{if(r.date&&r.date>=today)
       EV(j.id+"-iv"+ri,["DTSTART:"+DT(r.date)],
         "面试 "+j.company+"·"+(j.position||"")+"·"+r.round,(r.type||'')+(r.result?(' · '+r.result):'')+(r.note?'\n'+r.note:''),"-PT2H","面试提醒 "+j.company);
     });
   });
-  load('todo').forEach(t=>{if(t.date&&!t.done)
+  load('todo').forEach(t=>{if(t.date&&t.date>=today&&!t.done)
     EV(t.id+"-todo",["DTSTART:"+DT(t.date)],
       "重要事项 "+t.title,(t.note||'')+(t.company?('\n关联:'+t.company):''),"-PT0M",t.title);
   });
-  load('reminder').forEach(r=>{if(r.date)
+  load('reminder').forEach(r=>{if(r.date&&r.date>=today)
     EV(r.id+"-rm",["DTSTART:"+DT(r.date)],
       (r.kind&&r.kind!=='custom'?r.kind+':':'')+r.title,(r.note||''),"-PT0M",r.title);
   });
@@ -1286,7 +1302,7 @@ function exportICS(){
     '• iPhone/iPad：把 .ics 发给自己（微信文件 / 邮件 / AirDrop）→ 点击 → 添加到日历。<br>'+
     '• 安卓：下载后在文件管理里点开 .ics，选择用「日历」打开；华为/小米等自带日历一般支持。若点不动，把文件发到微信「文件传输助手」→ 手机点开 → 用其他应用打开 → 日历；或在电脑登录 calendar.google.com → 设置 → 导入。<br>'+
     '• Windows：双击 → 用「日历」或 Outlook 打开导入。<br>'+
-    '导入后即为<b>系统级每日 10 点提醒</b>（面试前 2 小时额外提醒），不再依赖本网页。提醒时间可在日历 App 内修改事件闹钟调整。';
+    '只导出<b>今天及以后</b>的提醒；提前天数与每天/隔天频率可在「日程」面板调整。导入后即为<b>系统级每日 10 点提醒</b>（面试前 2 小时额外提醒），不再依赖本网页。提醒时间可在日历 App 内修改事件闹钟调整。';
   exportFile("求职提醒_"+today+".ics",content,"text/calendar",help);
 }
 

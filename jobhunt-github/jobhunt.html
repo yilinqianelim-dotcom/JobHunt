@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#7895a2">
+<meta name="theme-color" content="#ece7e1">
 <title>JobHunting</title>
 <style>
   :root{
@@ -33,19 +33,20 @@
   body{font-family:var(--font);
     background:var(--bg);color:var(--ink);font-size:16px;line-height:1.6;}
   .app{max-width:1180px;margin:0 auto;padding:0 14px 100px;}
-  header{position:sticky;top:0;z-index:30;background:linear-gradient(135deg,var(--pri),var(--pri2));
-    color:#fff;padding:16px 16px 13px;box-shadow:0 4px 16px rgba(79,70,229,.18);}
+  header{position:sticky;top:0;z-index:30;background:var(--card);
+    color:var(--ink);padding:14px 16px 12px;border-bottom:1px solid var(--line);box-shadow:0 1px 8px rgba(46,51,61,.05);}
   .head-row{display:flex;align-items:center;justify-content:space-between;gap:10px;max-width:1180px;margin:0 auto;}
-  .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px;}
-  .brand .logo{width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;}
-  .sync{display:flex;align-items:center;gap:6px;font-size:12.5px;background:rgba(255,255,255,.16);padding:5px 10px;border-radius:999px;}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px;color:var(--ink);letter-spacing:.2px;}
+  .brand .logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--pri),var(--pri2));display:flex;align-items:center;justify-content:center;}
+  .sync{display:flex;align-items:center;gap:6px;font-size:12.5px;background:var(--bg);color:var(--sub);padding:5px 11px;border-radius:999px;border:1px solid var(--line);}
   .dot{width:8px;height:8px;border-radius:50%;background:#34d399;}
   .tools{display:flex;gap:8px;margin-top:11px;flex-wrap:wrap;max-width:1180px;margin-left:auto;margin-right:auto;}
-  .tbtn{font-size:12.5px;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.12);color:#fff;
-    padding:6px 11px;border-radius:9px;cursor:pointer;display:flex;align-items:center;gap:5px;}
-  .tbtn:hover{background:rgba(255,255,255,.22);}
-  .tbtn.add{background:#fff;color:var(--pri);border-color:#fff;font-weight:700;}
-  .tbtn .badge{background:#fff;color:var(--pri);border-radius:999px;font-size:11px;padding:0 6px;font-weight:700;}
+  .tbtn{font-size:13px;border:1px solid var(--line);background:transparent;color:var(--ink);
+    padding:6px 13px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:5px;transition:background .15s,border-color .15s;}
+  .tbtn:hover{background:var(--bg);border-color:var(--sub);}
+  .tbtn.add{background:var(--pri);color:#fff;border-color:var(--pri);font-weight:600;}
+  .tbtn.add:hover{background:var(--pri2);border-color:var(--pri2);}
+  .tbtn .badge{background:var(--pri);color:#fff;border-radius:999px;font-size:11px;padding:0 6px;font-weight:700;}
 
   .section{margin-top:16px;}
   .sec-title{font-size:13px;font-weight:700;color:var(--sub);letter-spacing:.5px;margin:0 4px 10px;display:flex;align-items:center;gap:6px;justify-content:space-between;}
@@ -182,6 +183,62 @@
     padding:10px 18px;border-radius:999px;font-size:13.5px;z-index:99;opacity:0;transition:opacity .25s;pointer-events:none;}
   .toast.show{opacity:1;}
 .bar-seg{border-radius:3px;}.hbar .ht{border-radius:4px;}
+
+  /* ===== 单色立体（光影拟态）覆盖层 ===== */
+  :root{
+    --surf:#ece7e1;
+    --bg:var(--surf); --card:var(--surf); --col-bg:var(--surf);
+    --input-bg:var(--surf); --ia-bg:var(--surf); --chip-bg:var(--surf);
+    --line:transparent;
+    --salary-bg:rgba(143,174,154,.16); --req-bg:rgba(120,130,145,.10); --note-bg:rgba(120,130,145,.07); --overdue-bg:rgba(193,118,107,.14);
+    --sh-d:rgba(166,152,141,.5); --sh-l:rgba(255,255,255,.92);
+    --raise:6px 6px 14px var(--sh-d),-6px -6px 14px var(--sh-l);
+    --raise-sm:4px 4px 9px var(--sh-d),-4px -4px 9px var(--sh-l);
+    --raise-xs:2px 2px 6px var(--sh-d),-2px -2px 6px var(--sh-l);
+    --inset-xs:inset 2px 2px 5px var(--sh-d),inset -2px -2px 5px var(--sh-l);
+    --shadow:var(--raise-sm);
+  }
+  body.theme-dark{
+    --surf:#262a32;
+    --sh-d:rgba(0,0,0,.5); --sh-l:rgba(255,255,255,.05);
+    --salary-bg:rgba(143,174,154,.14); --req-bg:rgba(148,163,184,.10); --note-bg:rgba(148,163,184,.07); --overdue-bg:rgba(193,118,107,.14);
+  }
+  header{background:var(--surf);border-bottom:none;box-shadow:none;}
+  .brand .logo{box-shadow:var(--raise-xs);}
+  .sync{background:var(--surf);border:none;box-shadow:var(--inset-xs);}
+  .tbtn{background:var(--surf);border:none;box-shadow:var(--raise-xs);border-radius:11px;}
+  .tbtn:hover{background:var(--surf);}
+  .tbtn:active{box-shadow:var(--inset-xs);}
+  .tbtn.add{background:var(--surf);color:var(--pri);font-weight:700;}
+  .tbtn.add:hover{background:var(--surf);}
+  .tbtn .badge{background:var(--pri);color:#fff;}
+  .stat{background:var(--surf);border:none;border-radius:16px;box-shadow:var(--raise-sm);}
+  .cat-group{background:var(--surf);border:none;border-radius:18px;box-shadow:var(--raise);}
+  .mini-lane{background:rgba(96,106,122,.055);border:none;box-shadow:none;border-radius:12px;}
+  body.theme-dark .mini-lane{background:rgba(255,255,255,.035);}
+  .imp-item,.sched-item{background:rgba(96,106,122,.045);border-radius:12px;}
+  body.theme-dark .imp-item,body.theme-dark .sched-item{background:rgba(255,255,255,.03);}
+  .kcard{background:var(--surf);border:none;border-radius:14px;box-shadow:var(--raise-sm);}
+  .panel{background:var(--surf);border:none;border-radius:20px;box-shadow:var(--raise);}
+  .kpi{background:var(--surf);border:none;border-radius:14px;box-shadow:var(--raise-xs);}
+  .task-card{box-shadow:var(--raise-sm);border:none;}
+  input,select,textarea{background:var(--surf)!important;border:none!important;box-shadow:var(--inset-xs);border-radius:12px;}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--pri2);outline-offset:0;}
+  .modal{background:var(--surf);border:none;border-radius:22px;box-shadow:none;}
+  .save-btn{background:var(--surf);color:var(--pri);border:none;border-radius:13px;box-shadow:var(--raise-sm);font-weight:700;}
+  .save-btn:active{box-shadow:var(--inset-xs);}
+  .add-btn{background:var(--surf);border:none;box-shadow:var(--raise-xs);border-radius:11px;}
+  .add-btn:active{box-shadow:var(--inset-xs);}
+  .ia{background:var(--surf);border:none;box-shadow:var(--raise-xs);border-radius:10px;}
+  .ia:active{box-shadow:var(--inset-xs);}
+  .ph-act,.panel-act{background:var(--surf);border:none;color:var(--pri);box-shadow:var(--raise-xs);border-radius:10px;font-weight:600;}
+  .ph-act:active,.panel-act:active{box-shadow:var(--inset-xs);}
+  .cat-mini{background:var(--surf);border:none;box-shadow:var(--raise-xs);border-radius:999px;padding:4px 11px;}
+  .x{background:transparent;border:none;box-shadow:none;}
+  .imp-done,.sched-del{background:var(--surf);border:none;box-shadow:var(--raise-xs);border-radius:10px;}
+  .imp-done:active,.sched-del:active{box-shadow:var(--inset-xs);}
+  .mini-title .cnt{background:var(--surf);border:none;box-shadow:var(--raise-xs);border-radius:999px;padding:1px 8px;}
+  .swatch{box-shadow:var(--raise-xs);}
 </style>
 </head>
 <body>
@@ -196,19 +253,19 @@
     <div class="sync"><span class="dot"></span><span id="syncText">本地已保存</span></div>
   </div>
   <div class="tools">
-    <button class="tbtn add" onclick="openJob()">➕ 新增岗位</button>
+    <button class="tbtn add" onclick="openJob()">＋ 新增岗位</button>
     <button class="tbtn" onclick="openTheme()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#fff" stroke-width="1.8"/><path d="M12 3a9 9 0 0 0 0 18Z" fill="#fff"/></svg>外观
     </button>
-    <button class="tbtn" onclick="goSec('analytics')">📊 分析</button>
-    <button class="tbtn" onclick="goSec('sched')">⏰ 日程</button>
-    <button class="tbtn" onclick="goSec('important')">⭐ 重要<span class="badge" id="impBadge">0</span></button>
-    <button class="tbtn" onclick="openRejected()">✕ 被拒Offer<span class="badge" id="rejBadge">0</span></button>
-    <button class="tbtn" onclick="openAcct()" id="acctBtn">👤 登录</button>
-    <button class="tbtn" onclick="openFb()">💬 反馈</button>
-    <button class="tbtn" onclick="downloadHTML()">⬇ 网页</button>
-    <button class="tbtn" onclick="exportJSON()">⬇ 备份</button>
-    <button class="tbtn" onclick="importJSON()">⬆ 恢复</button>
+    <button class="tbtn" onclick="goSec('analytics')">数据分析</button>
+    <button class="tbtn" onclick="goSec('sched')">日程</button>
+    <button class="tbtn" onclick="goSec('important')">重要事项<span class="badge" id="impBadge">0</span></button>
+    <button class="tbtn" onclick="openRejected()">被拒Offer<span class="badge" id="rejBadge">0</span></button>
+    <button class="tbtn" onclick="openAcct()" id="acctBtn">登录</button>
+    <button class="tbtn" onclick="openFb()">反馈</button>
+    <button class="tbtn" onclick="downloadHTML()">网页备份</button>
+    <button class="tbtn" onclick="exportJSON()">数据备份</button>
+    <button class="tbtn" onclick="importJSON()">数据恢复</button>
     <input type="file" id="importFile" accept="application/json" style="display:none" onchange="handleImport(event)">
   </div>
 </header>
@@ -230,7 +287,7 @@
 
   <!-- 重要事项 -->
   <div class="panel" id="important">
-    <h2>⭐ 重要事项 <span id="impCount" style="color:var(--sub);font-size:12px;font-weight:600"></span>
+    <h2>重要事项 <span id="impCount" style="color:var(--sub);font-size:12px;font-weight:600"></span>
       <button class="ph-act" onclick="openTodo()">＋ 添加事项</button>
     </h2>
     <div id="impList"></div>
@@ -238,14 +295,14 @@
 
   <!-- 日程提醒 -->
   <div class="panel" id="sched">
-    <h2>⏰ 日程 <button class="ph-act" onclick="openModal('reminder')">＋ 添加提醒</button></h2>
+    <h2>日程 <button class="ph-act" onclick="openModal('reminder')">＋ 添加提醒</button></h2>
     <div id="schedList"></div>
-    <button class="panel-act" onclick="exportICS()">📅 导出到系统日历</button>
+    <button class="panel-act" onclick="exportICS()">导出到系统日历</button>
   </div>
 
   <!-- 数据分析 -->
   <div class="panel" id="analytics">
-    <h2>📊 数据分析</h2>
+    <h2>数据分析</h2>
     <div class="kpis" id="kpiBar"></div>
     <div class="chart">
       <h3>各类型进展</h3>
@@ -267,7 +324,7 @@
 </div>
 
 <!-- 账号弹窗 -->
-<div class="modal-mask" id="acctMask" onclick="if(event.target===this)closeAcct()">
+<div class="modal-mask" id="acctMask">
   <div class="modal" style="max-width:380px">
     <div id="acctOut">
       <h3>欢迎使用 JobHunting <button class="x" id="acctX" onclick="closeAcct()" style="display:none">×</button></h3>
@@ -332,8 +389,8 @@
         <div class="field full"><label>快速填写（可选）</label>
           <textarea id="ap-jd" rows="2" placeholder="粘贴职位描述，或点下方「截图识别」上传招聘软件截图，自动识别薪资和岗位要求"></textarea>
           <div style="display:flex;gap:8px;align-items:center;margin-top:6px;flex-wrap:wrap">
-            <button type="button" class="ph-act" onclick="smartParse()">✨ 识别并填充</button>
-            <button type="button" class="ph-act" onclick="document.getElementById('ap-shot').click()">📷 截图识别</button>
+            <button type="button" class="ph-act" onclick="smartParse()">识别并填充</button>
+            <button type="button" class="ph-act" onclick="document.getElementById('ap-shot').click()">截图识别</button>
             <span id="ocrStatus" style="font-size:12px;color:var(--sub)"></span>
           </div>
           <input type="file" id="ap-shot" accept="image/*" style="display:none" onchange="ocrShot(event)">
@@ -438,8 +495,8 @@
   <div class="modal">
     <h3>已生成文件 <button class="x" onclick="closeExp()">×</button></h3>
     <p style="font-size:13px;color:var(--sub);margin:0 0 10px">文件名：<b id="expName"></b></p>
-    <a id="expLink" class="save-btn" style="display:block;text-align:center;text-decoration:none;margin-bottom:8px">⬇ 下载 / 新标签页打开</a>
-    <button class="save-btn" style="background:var(--sub);margin-top:0" onclick="copyExport()">📋 一键复制全部内容</button>
+    <a id="expLink" class="save-btn" style="display:block;text-align:center;text-decoration:none;margin-bottom:8px">下载 / 新标签页打开</a>
+    <button class="save-btn" style="background:var(--sub);margin-top:0" onclick="copyExport()">一键复制全部内容</button>
     <div id="expHelp" style="margin:12px 0;font-size:12.5px;color:var(--sub);line-height:1.6"></div>
     <label style="font-size:12px;color:var(--sub);font-weight:600">若在本软件预览框里下载/复制被拦截：请用<b>真实浏览器</b>打开本页（上面的 https 链接，或本地 <code>python3 -m http.server</code>），或在此直接按 <b>Ctrl/⌘+C</b> 复制下方已自动选中的内容，粘贴保存为同名文件（.ics / .json / .html）。</label>
     <textarea id="expContent" style="width:100%;height:150px;margin-top:6px;font-family:monospace;font-size:12px;padding:8px;border:1px solid var(--line);border-radius:10px;background:var(--input-bg);color:var(--ink)"></textarea>
@@ -455,6 +512,19 @@
       <div class="seg" id="segTheme">
         <button class="seg-btn" data-v="light" onclick="setThemeMode('light')">浅色</button>
         <button class="seg-btn" data-v="dark" onclick="setThemeMode('dark')">深色</button>
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:16px">
+      <label>界面色调</label>
+      <div class="seg" id="segTone">
+        <button class="seg-btn" data-v="cloud" onclick="setTone('cloud')">云雾灰</button>
+        <button class="seg-btn" data-v="warm" onclick="setTone('warm')">暖米</button>
+        <button class="seg-btn" data-v="sage" onclick="setTone('sage')">灰绿</button>
+        <button class="seg-btn" data-v="rose" onclick="setTone('rose')">灰粉</button>
+      </div>
+      <div style="margin-top:10px;display:flex;align-items:center;gap:8px">
+        <input type="color" id="tonePick" value="#ece7e1" style="width:42px;height:34px;padding:2px;cursor:pointer" onchange="setToneCustom(this.value)">
+        <span style="font-size:12px;color:var(--sub)">自定义模块背景色（浅色效果最佳）</span>
       </div>
     </div>
     <div class="field" style="margin-bottom:16px">
@@ -530,6 +600,15 @@ function lighten(hex,amt){
   return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');
 }
 function curTheme(){try{return JSON.parse(localStorage.getItem(THEME_KEY)||"{}");}catch(e){return {};}}
+const TONES={
+  cloud:{surf:'#e7eaef',shd:'rgba(139,151,167,.5)'},
+  warm:{surf:'#ece7e1',shd:'rgba(166,152,141,.5)'},
+  sage:{surf:'#e5eae5',shd:'rgba(140,157,146,.5)'},
+  rose:{surf:'#ede5e6',shd:'rgba(173,148,152,.5)'}
+};
+function shadowFrom(hex){hex=hex.replace('#','');if(hex.length===3)hex=hex.split('').map(c=>c+c).join('');
+  const r=Math.round(parseInt(hex.slice(0,2),16)*.72),g=Math.round(parseInt(hex.slice(2,4),16)*.72),b=Math.round(parseInt(hex.slice(4,6),16)*.72);
+  return 'rgba('+r+','+g+','+b+',.5)';}
 function applyTheme(){
   const s=curTheme();
   const accent=s.accent||"#7895a2";
@@ -538,6 +617,11 @@ function applyTheme(){
   root.setProperty("--pri",accent);
   root.setProperty("--pri2",accent2);
   document.body.classList.toggle("theme-dark",s.theme==="dark");
+  let surf,shd;
+  if(s.tone==='custom'&&s.toneColor){surf=s.toneColor;shd=shadowFrom(s.toneColor);}
+  else{const t=TONES[s.tone||'warm']||TONES.warm;surf=t.surf;shd=t.shd;}
+  if(s.theme==="dark"){root.removeProperty("--surf");root.removeProperty("--sh-d");}
+  else{root.setProperty("--surf",surf);root.setProperty("--sh-d",shd);}
   root.setProperty("--font",FONTS[s.font||"sans"]);
   if(!s.accent2){s.accent2=accent2;try{localStorage.setItem(THEME_KEY,JSON.stringify(s));}catch(e){}}
 }
@@ -545,6 +629,8 @@ function reflectTheme(){
   const s=curTheme();
   document.querySelectorAll('#segTheme .seg-btn').forEach(b=>b.classList.toggle('active',b.dataset.v===(s.theme||'light')));
   document.querySelectorAll('#segFont .seg-btn').forEach(b=>b.classList.toggle('active',b.dataset.v===(s.font||'sans')));
+  document.querySelectorAll('#segTone .seg-btn').forEach(b=>b.classList.toggle('active',b.dataset.v===(s.tone||'warm')));
+  const tp=document.getElementById('tonePick');if(tp&&s.tone==='custom'&&s.toneColor)tp.value=s.toneColor;
   const pick=document.getElementById('accentPick');if(pick)pick.value=(s.accent||'#7895a2');
   document.querySelectorAll('#swatches .swatch').forEach(el=>el.classList.toggle('active',el.dataset.c===(s.accent||'#7895a2').toLowerCase()));
 }
@@ -554,14 +640,19 @@ function buildSwatches(){
 }
 function setAccent(c){const s=curTheme();s.accent=c;s.accent2=lighten(c,0.25);try{localStorage.setItem(THEME_KEY,JSON.stringify(s));}catch(e){}applyTheme();reflectTheme();}
 function setThemeMode(m){const s=curTheme();s.theme=m;try{localStorage.setItem(THEME_KEY,JSON.stringify(s));}catch(e){}applyTheme();reflectTheme();}
+function setToneCustom(c){const s=curTheme();s.tone='custom';s.toneColor=c;try{localStorage.setItem(THEME_KEY,JSON.stringify(s));}catch(e){}applyTheme();reflectTheme();}
+function setTone(t){const s=curTheme();s.tone=t;delete s.toneColor;try{localStorage.setItem(THEME_KEY,JSON.stringify(s));}catch(e){}applyTheme();reflectTheme();}
 function setFont(f){const s=curTheme();s.font=f;try{localStorage.setItem(THEME_KEY,JSON.stringify(s));}catch(e){}applyTheme();reflectTheme();}
 function resetTheme(){try{localStorage.removeItem(THEME_KEY);}catch(e){}applyTheme();buildSwatches();reflectTheme();toast("已恢复默认外观");}
 function openTheme(){buildSwatches();reflectTheme();document.getElementById('themeMask').classList.add('show');}
 function closeTheme(){document.getElementById('themeMask').classList.remove('show');}
-function downloadHTML(){
-  const html='<!DOCTYPE html>\n'+document.documentElement.outerHTML;
-  const help='<b>独立网页文件</b>：保存为 <b>求职记录台.html</b> 后双击即可在浏览器打开（是完整独立网站）；也可上传到 Netlify Drop / GitHub Pages 变成公网站点。若下方无法下载，请复制全部内容、粘贴保存为 求职记录台.html 文件。';
-  exportFile("求职记录台.html",html,"text/html",help);
+async function downloadHTML(){
+  let html='';
+  try{const r=await fetch('./index.html',{cache:'no-store'});if(r.ok)html=await r.text();}catch(e){}
+  if(!html){try{const r2=await fetch('./',{cache:'no-store'});if(r2.ok)html=await r2.text();}catch(e){}}
+  if(!html)html='<!DOCTYPE html>\n'+document.documentElement.outerHTML;
+  const help='<b>独立网页文件</b>：当前线上最新版程序（不含你的个人数据）。保存为 <b>JobHunting.html</b> 双击即可离线打开，也可自行部署到任意静态托管。';
+  exportFile("JobHunting.html",html,"text/html",help);
 }
 
 /* ===== 分类 / 折叠 ===== */
@@ -718,7 +809,7 @@ function hasSbSession(){try{for(let i=0;i<localStorage.length;i++){const k=local
 function updateAcctUI(){
   const x=document.getElementById('acctX');if(x)x.style.display='';
   const b=document.getElementById('acctBtn');
-  if(b)b.textContent=sbUser?('👤 '+(sbUser.email||'').split('@')[0]):'👤 登录';
+  if(b)b.textContent=sbUser?(sbUser.email||'').split('@')[0]:'登录';
   const out=document.getElementById('acctOut'),inn=document.getElementById('acctIn');
   if(out&&inn){out.style.display=sbUser?'none':'block';inn.style.display=sbUser?'block':'none';
     if(sbUser)document.getElementById('acctEmail').textContent=sbUser.email||'';}
@@ -823,7 +914,7 @@ async function smartParse(){
   const j=await aiParse(t);
   setOcr('');
   if(!j){parseJD();return;}
-  if(j.valid===false){toast('⚠ '+(j.reason||'这段内容不像职位描述，请提供包含公司、岗位、薪资或任职要求的招聘信息'));return;}
+  if(j.valid===false){toast('提示：'+(j.reason||'这段内容不像职位描述，请提供包含公司、岗位、薪资或任职要求的招聘信息'));return;}
   const F=[['ap-company',j.company,'公司'],['ap-position',j.position,'岗位'],['ap-category',j.category,'分类'],['ap-salary',j.salary,'薪资'],['ap-requirement',j.requirement,'要求']];
   const filled=[];
   F.forEach(pair=>{const id=pair[0],v=pair[1],name=pair[2];if(v&&!val(id)){setV(id,String(v).slice(0,120));filled.push(name);}});
@@ -1217,7 +1308,7 @@ function goSec(id){document.getElementById(id).scrollIntoView({behavior:'smooth'
 function exportJSON(){
   const data={jobs:load("jobs"),todo:load("todo"),reminder:load("reminder")};
   const content=JSON.stringify(data,null,2);
-  const help='<b>备份文件</b>：保存为 .json。换设备时用本页「⬆ 恢复」选择此文件即可迁移全部数据（数据仅存本机，请妥善保存）。';
+  const help='<b>备份文件</b>：保存为 .json。换设备时用本页「恢复」选择此文件即可迁移全部数据（数据仅存本机，请妥善保存）。';
   exportFile("求职记录备份_"+todayStr()+".json",content,"application/json",help);
 }
 function exportFile(filename,content,mime,helpHtml){
@@ -1301,7 +1392,7 @@ if(!storageOK()){
   const b=document.getElementById('storeBanner');
   b.style.display='block';
   const here=location.href;
-  b.innerHTML='⚠ <b>当前环境无法保存数据</b>：你添加/修改的记录在刷新后会丢失。请用以下方式打开才能长久保存：① 若下方地址是 <b>https://</b> 开头，直接在此浏览器用该地址打开即可保存；② 点顶部「⬇ 网页」下载本页，再用本地服务打开（终端执行 <code>python3 -m http.server</code> 后访问 http://localhost:8000）。当前地址：<b style="word-break:break-all">'+esc(here)+'</b>。在本预览框内仅作临时查看。';
+  b.innerHTML='⚠ <b>当前环境无法保存数据</b>：你添加/修改的记录在刷新后会丢失。请用以下方式打开才能长久保存：① 若下方地址是 <b>https://</b> 开头，直接在此浏览器用该地址打开即可保存；② 点顶部「网页」下载本页，再用本地服务打开（终端执行 <code>python3 -m http.server</code> 后访问 http://localhost:8000）。当前地址：<b style="word-break:break-all">'+esc(here)+'</b>。在本预览框内仅作临时查看。';
 }
 </script>
 </body>

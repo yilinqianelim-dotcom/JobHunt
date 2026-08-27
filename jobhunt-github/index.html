@@ -207,6 +207,8 @@
     <button class="tbtn" onclick="goSec('sched')">⏰ 日程</button>
     <button class="tbtn" onclick="goSec('important')">⭐ 重要<span class="badge" id="impBadge">0</span></button>
     <button class="tbtn" onclick="openRejected()">✕ 被拒Offer<span class="badge" id="rejBadge">0</span></button>
+    <button class="tbtn" onclick="openAcct()" id="acctBtn">👤 登录</button>
+    <button class="tbtn" onclick="openFb()">💬 反馈</button>
     <button class="tbtn" onclick="downloadHTML()">⬇ 网页</button>
     <button class="tbtn" onclick="exportJSON()">⬇ 备份</button>
     <button class="tbtn" onclick="importJSON()">⬆ 恢复</button>
@@ -265,6 +267,46 @@
   </div>
 
   <div class="clear-sample" onclick="clearSample()">清空示例数据</div>
+</div>
+
+<!-- 账号弹窗 -->
+<div class="modal-mask" id="acctMask" onclick="if(event.target===this)closeAcct()">
+  <div class="modal" style="max-width:380px">
+    <div id="acctOut">
+      <h3>登录 / 注册 <button class="x" onclick="closeAcct()">×</button></h3>
+      <div style="font-size:13px;color:var(--sub);margin:4px 0 12px;line-height:1.6">登录后记录自动同步云端，手机/电脑/微信里登同一账号即同一份数据。不登录也可正常使用（数据仅存本机）。</div>
+      <div class="grid">
+        <div class="field full"><label>邮箱</label><input id="ac-email" type="email" placeholder="you@example.com"></div>
+        <div class="field full"><label>密码</label><input id="ac-pass" type="password" placeholder="至少 6 位"></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button class="save-btn" style="flex:1" onclick="doLogin()">登录</button>
+        <button class="save-btn" style="flex:1;background:var(--card);color:var(--pri);border:1.5px solid var(--pri)" onclick="doSignup()">注册</button>
+      </div>
+      <div id="acctMsg" style="font-size:12.5px;color:var(--danger);margin-top:10px"></div>
+    </div>
+    <div id="acctIn" style="display:none">
+      <h3>我的账号 <button class="x" onclick="closeAcct()">×</button></h3>
+      <div style="font-size:14px;margin:8px 0 4px">已登录：<b id="acctEmail"></b></div>
+      <div style="font-size:12.5px;color:var(--sub);margin-bottom:14px;line-height:1.6">云同步已开启：每次改动约 2 秒后自动上传；换设备登录同一账号即可看到全部记录。</div>
+      <div style="display:flex;gap:10px">
+        <button class="save-btn" style="flex:1" onclick="manualSync()">立即同步</button>
+        <button class="save-btn" style="flex:1;background:var(--card);color:var(--danger);border:1.5px solid var(--danger)" onclick="doLogout()">退出登录</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 反馈弹窗 -->
+<div class="modal-mask" id="fbMask" onclick="if(event.target===this)closeFb()">
+  <div class="modal" style="max-width:380px">
+    <h3>反馈与建议 <button class="x" onclick="closeFb()">×</button></h3>
+    <div class="grid">
+      <div class="field full"><label>想说的话（bug / 建议都行）</label><textarea id="fb-content" rows="3" placeholder="例如：安卓上日历导入没反应；希望加一个 xx 功能"></textarea></div>
+      <div class="field full"><label>联系方式（可选）</label><input id="fb-contact" placeholder="微信 / 邮箱，便于回访"></div>
+    </div>
+    <button class="save-btn" style="margin-top:12px" onclick="sendFb()">提交</button>
+  </div>
 </div>
 
 <!-- 自绘确认弹窗（替代原生 confirm，兼容 iOS 主屏 App） -->
@@ -452,7 +494,7 @@ function lsGet(k){try{return localStorage.getItem(k);}catch(e){return (k in MEM)
 function lsSet(k,v){try{localStorage.setItem(k,v);}catch(e){MEM[k]=v;}}
 function storageOK(){try{const k="__wb_test__";localStorage.setItem(k,"1");localStorage.removeItem(k);return true;}catch(e){return false;}}
 function load(c){try{return JSON.parse(lsGet(COLS[c])||"[]");}catch(e){return [];}}
-function save(c,v){lsSet(COLS[c],JSON.stringify(v));flashSync();}
+function save(c,v){lsSet(COLS[c],JSON.stringify(v));flashSync();if(typeof markDirty==='function')markDirty();}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
 function fmtDate(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
 function todayStr(){return fmtDate(new Date());}
@@ -657,6 +699,101 @@ function clearModal(type){
 function val(id){const e=document.getElementById(id);return e?e.value.trim():"";}
 function setV(id,v){const e=document.getElementById(id);if(e&&v!=null)e.value=v;}
 
+/* ===== 账号与云同步（Supabase，按需加载） ===== */
+const SB_URL='https://vdbxhtzqlymhaxszkdrn.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZkYnhodHpxbHltaGF4c3prZHJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4Mjk1NTUsImV4cCI6MjEwMzQwNTU1NX0.8NP1uaPSodmsU4M5qcKAyD3QQo6o_CRBAUzvWKQhGQ4';
+let sb=null,sbUser=null,pushTimer=null;
+async function ensureSB(){
+  if(sb)return sb;
+  if(!window.supabase){
+    const urls=['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js','https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js'];
+    for(const u of urls){try{await loadScript(u);}catch(e){}if(window.supabase)break;}
+    if(!window.supabase)throw new Error('supabase load fail');
+  }
+  sb=window.supabase.createClient(SB_URL,SB_KEY);
+  return sb;
+}
+function hasSbSession(){try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf('sb-')===0&&k.indexOf('auth-token')>-1)return true;}}catch(e){}return false;}
+function updateAcctUI(){
+  const b=document.getElementById('acctBtn');
+  if(b)b.textContent=sbUser?('👤 '+(sbUser.email||'').split('@')[0]):'👤 登录';
+  const out=document.getElementById('acctOut'),inn=document.getElementById('acctIn');
+  if(out&&inn){out.style.display=sbUser?'none':'block';inn.style.display=sbUser?'block':'none';
+    if(sbUser)document.getElementById('acctEmail').textContent=sbUser.email||'';}
+}
+function openAcct(){updateAcctUI();document.getElementById('acctMask').classList.add('show');}
+function closeAcct(){document.getElementById('acctMask').classList.remove('show');}
+function acctMsg(m){const e=document.getElementById('acctMsg');if(e)e.textContent=m||'';}
+async function doLogin(){
+  const email=val('ac-email'),pass=document.getElementById('ac-pass').value;
+  if(!email||!pass){acctMsg('请填写邮箱和密码');return;}
+  acctMsg('');
+  try{
+    await ensureSB();
+    const {data,error}=await sb.auth.signInWithPassword({email,password:pass});
+    if(error){acctMsg(error.message.indexOf('Invalid')>-1?'邮箱或密码不对':'登录失败：'+error.message);return;}
+    sbUser=data.user;updateAcctUI();closeAcct();toast('登录成功，同步中…');
+    await pullData();
+  }catch(e){acctMsg('网络异常，稍后再试');}
+}
+async function doSignup(){
+  const email=val('ac-email'),pass=document.getElementById('ac-pass').value;
+  if(!email||!pass||pass.length<6){acctMsg('请填写邮箱和至少 6 位密码');return;}
+  acctMsg('');
+  try{
+    await ensureSB();
+    const {data,error}=await sb.auth.signUp({email,password:pass});
+    if(error){acctMsg('注册失败：'+error.message);return;}
+    if(data.session){sbUser=data.user;updateAcctUI();closeAcct();toast('注册成功，云同步已开启');await pullData();}
+    else acctMsg('注册成功！请去邮箱点确认邮件后回来登录');
+  }catch(e){acctMsg('网络异常，稍后再试');}
+}
+async function doLogout(){try{await ensureSB();await sb.auth.signOut();}catch(e){}sbUser=null;updateAcctUI();closeAcct();toast('已退出，数据保留在本机');}
+function localSnapshot(){return {jobs:load('jobs'),todo:load('todo'),reminder:load('reminder')};}
+function markDirty(){lsSet(PREFIX+'lastmod',String(Date.now()));if(sbUser){clearTimeout(pushTimer);pushTimer=setTimeout(pushData,1500);}}
+async function pushData(){
+  if(!sbUser)return;
+  try{await sb.from('user_data').upsert({user_id:sbUser.id,data:localSnapshot(),updated_at:new Date().toISOString()});
+    const e=document.getElementById('syncText');if(e)e.textContent='已同步云端';}catch(e){}
+}
+async function pullData(){
+  if(!sbUser)return;
+  try{
+    const {data,error}=await sb.from('user_data').select('data,updated_at').eq('user_id',sbUser.id).maybeSingle();
+    if(error)return;
+    const localMod=parseInt(lsGet(PREFIX+'lastmod')||'0',10);
+    if(!data){if(localMod)pushData();return;}
+    const remoteMod=new Date(data.updated_at).getTime();
+    if(remoteMod>=localMod){
+      const d=data.data||{};
+      if(Array.isArray(d.jobs))lsSet(COLS.jobs,JSON.stringify(d.jobs));
+      if(Array.isArray(d.todo))lsSet(COLS.todo,JSON.stringify(d.todo));
+      if(Array.isArray(d.reminder))lsSet(COLS.reminder,JSON.stringify(d.reminder));
+      lsSet(COLS.sample,'1');lsSet(PREFIX+'lastmod',String(remoteMod));
+      renderAll();toast('已从云端同步最新数据');
+    }else pushData();
+  }catch(e){}
+}
+async function manualSync(){toast('同步中…');await pushData();await pullData();toast('同步完成');}
+/* 反馈 */
+function openFb(){document.getElementById('fbMask').classList.add('show');}
+function closeFb(){document.getElementById('fbMask').classList.remove('show');}
+async function sendFb(){
+  const content=val('fb-content');if(!content){toast('写点内容再提交吧');return;}
+  try{
+    await ensureSB();
+    await sb.from('feedback').insert({user_id:sbUser?sbUser.id:null,content:content.slice(0,2000),contact:val('fb-contact').slice(0,100),ua:navigator.userAgent.slice(0,200)});
+    setV('fb-content','');setV('fb-contact','');closeFb();toast('已收到，谢谢反馈！');
+  }catch(e){toast('提交失败，请检查网络后重试');}
+}
+/* 报错自动上报（每次会话最多 3 条） */
+let _errN=0;
+window.addEventListener('error',function(ev){
+  if(_errN>=3)return;_errN++;
+  try{ensureSB().then(function(){
+    sb.from('error_logs').insert({user_id:sbUser?sbUser.id:null,message:String(ev.message||'').slice(0,300),stack:(ev.error&&ev.error.stack?String(ev.error.stack):'').slice(0,800),ua:navigator.userAgent.slice(0,200),url:String(location.href).slice(0,200)}).then(function(){}).catch(function(){});
+  }).catch(function(){});}catch(e){}
+});
 /* AI 识别：调用同域云函数 /.netlify/functions/parse-jd，失败自动回退本地规则 */
 async function aiParse(text){
   const ctl=new AbortController();const tm=setTimeout(()=>ctl.abort(),15000);
@@ -1072,6 +1209,9 @@ function exportJSON(){
   exportFile("求职记录备份_"+todayStr()+".json",content,"application/json",help);
 }
 function exportFile(filename,content,mime,helpHtml){
+  if(/MicroMessenger/i.test(navigator.userAgent)){
+    helpHtml='<b style="color:var(--danger)">当前在微信内打开：</b>微信不允许网页下载文件或调起日历。请点右上角「···」→「在浏览器中打开」后再导出；或先用下方「一键复制」把内容拷走。<br><br>'+(helpHtml||'');
+  }
   const dataUri='data:'+(mime||'text/plain')+';charset=utf-8,'+encodeURIComponent(content);
   // ① 真实下载（部署链接 / 本地 http 打开时可用）
   try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type:mime}));a.download=filename;document.body.appendChild(a);a.click();a.remove();}catch(e){}
@@ -1140,6 +1280,7 @@ function renderAll(){renderBoard();renderStats();renderImportant();renderSched()
 applyTheme();
 seed();
 renderAll();
+if(hasSbSession()){ensureSB().then(async()=>{const {data}=await sb.auth.getSession();sbUser=data&&data.session?data.session.user:null;updateAcctUI();if(sbUser)pullData();}).catch(()=>{});}
 /* 申请持久存储：降低 Safari/Chrome 在空间紧张或长期未访问时自动清除本站数据的概率 */
 if(navigator.storage&&navigator.storage.persist){navigator.storage.persist().catch(()=>{});}
 if(!storageOK()){

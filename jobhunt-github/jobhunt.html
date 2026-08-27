@@ -1257,38 +1257,45 @@ function exportICS(){
   // RFC5545 文本转义：\ ; , 换行 —— 否则备注含换行/逗号会生成损坏的 ics
   const X=s=>String(s||"").replace(/\\/g,"\\\\").replace(/;/g,"\\;").replace(/,/g,"\\,").replace(/\r?\n/g,"\\n");
   // UID 基于记录 id 稳定生成：同一份数据重复导入日历会覆盖而非重复
+  const STAMP=new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
   const EV=(uidStr,dtLines,summary,desc,alarmTrigger,alarmDesc)=>{
-    L.push("BEGIN:VEVENT","UID:"+uidStr+"@jobhunt");
+    L.push("BEGIN:VEVENT","UID:"+uidStr+"@jobhunt","DTSTAMP:"+STAMP);
     dtLines.forEach(x=>L.push(x));
     L.push("SUMMARY:"+X(summary),"DESCRIPTION:"+X(desc),
       "BEGIN:VALARM","TRIGGER:"+alarmTrigger,"ACTION:DISPLAY","DESCRIPTION:"+X(alarmDesc),"END:VALARM","END:VEVENT");
   };
   const lead=getLead();
-  const FR='FREQ=DAILY'+(getFreq()==='alt'?';INTERVAL=2':'');
+  const step=getFreq()==='alt'?2:1;
   const clamp=s=>s<today?today:s;
+  /* 通用重复序列：从 max(今天, 目标日-提前量) 起，按每天/隔天重复到目标日当天 */
+  const SER=(uid,endDate,summary,desc,alarm,alarmDesc)=>{
+    if(!endDate||endDate<today)return;
+    const st=clamp(shift(endDate,-lead));
+    const n=Math.floor(daysBetween(st,endDate)/step)+1;
+    const dt=["DTSTART:"+DT(st)];
+    if(n>1)dt.push("RRULE:FREQ=DAILY;INTERVAL="+step+";COUNT="+n);
+    EV(uid,dt,summary,desc,alarm,alarmDesc);
+  };
   load('jobs').forEach(j=>{
     if(j.stage==='已Offer'&&j.offerRejected)return;
-    if(j.stage==='待投递'&&j.date&&j.date>=today)
-      EV(j.id+"-prep",["DTSTART:"+DT(clamp(shift(j.date,-lead))),"RRULE:"+FR+";UNTIL="+DT(j.date)],
-        "准备投递 "+j.company+"·"+(j.position||""),"距离投递还有不到 "+lead+" 天，开始准备","-PT0M","准备投递 "+j.company);
-    if(j.needOpt)
-      EV(j.id+"-opt",["DTSTART:"+DT(today),"RRULE:"+FR+";UNTIL="+DT(shift(today,lead))],
+    if(j.stage==='待投递'&&j.date)
+      SER(j.id+"-prep",j.date,"准备投递 "+j.company+"·"+(j.position||""),"投递日 "+j.date+"，提前开始准备","-PT0M","准备投递 "+j.company);
+    if(j.needOpt){
+      const n=Math.floor(lead/step)+1;
+      EV(j.id+"-opt",["DTSTART:"+DT(today),"RRULE:FREQ=DAILY;INTERVAL="+step+";COUNT="+n],
         "优化简历 "+j.company+"·"+(j.position||""),(j.optNote||'需要优化简历'),"-PT0M","优化简历 "+j.company);
-    if(j.follow&&j.follow>=today)
-      EV(j.id+"-follow",["DTSTART:"+DT(j.follow)],
-        "跟进 "+j.company+"·"+(j.position||""),(j.note||'下次跟进'),"-PT0M","跟进 "+j.company);
-    if(j.iv&&j.iv.rounds)j.iv.rounds.forEach((r,ri)=>{if(r.date&&r.date>=today)
-      EV(j.id+"-iv"+ri,["DTSTART:"+DT(r.date)],
-        "面试 "+j.company+"·"+(j.position||"")+"·"+r.round,(r.type||'')+(r.result?(' · '+r.result):'')+(r.note?'\n'+r.note:''),"-PT2H","面试提醒 "+j.company);
+    }
+    if(j.follow)
+      SER(j.id+"-follow",j.follow,"跟进 "+j.company+"·"+(j.position||""),(j.note||'下次跟进'),"-PT0M","跟进 "+j.company);
+    if(j.iv&&j.iv.rounds)j.iv.rounds.forEach((r,ri)=>{if(r.date)
+      SER(j.id+"-iv"+ri,r.date,"面试 "+j.company+"·"+(j.position||"")+"·"+r.round,(r.type||'')+(r.result?(' · '+r.result):'')+(r.note?'\n'+r.note:''),"-PT2H","面试提醒 "+j.company);
     });
   });
-  load('todo').forEach(t=>{if(t.date&&t.date>=today&&!t.done)
-    EV(t.id+"-todo",["DTSTART:"+DT(t.date)],
-      "重要事项 "+t.title,(t.note||'')+(t.company?('\n关联:'+t.company):''),"-PT0M",t.title);
+  load('todo').forEach(t=>{if(t.date&&!t.done)
+    SER(t.id+"-todo",t.date,"重要事项 "+t.title,(t.note||'')+(t.company?('\n关联:'+t.company):''),"-PT0M",t.title);
   });
-  load('reminder').forEach(r=>{if(r.date&&r.date>=today)
-    EV(r.id+"-rm",["DTSTART:"+DT(r.date)],
-      (r.kind&&r.kind!=='custom'?r.kind+':':'')+r.title,(r.note||''),"-PT0M",r.title);
+  load('reminder').forEach(r=>{if(r.date)
+    SER(r.id+"-rm",r.date,(r.kind&&r.kind!=='custom'?r.kind+':':'')+r.title,(r.note||''),"-PT0M",r.title);
   });
   L.push("END:VCALENDAR");
   // 75 字节折行（RFC5545），部分严格的日历应用需要
@@ -1299,7 +1306,7 @@ function exportICS(){
     '• iPhone/iPad：把 .ics 发给自己（微信文件 / 邮件 / AirDrop）→ 点击 → 添加到日历。<br>'+
     '• 安卓：下载后在文件管理里点开 .ics，选择用「日历」打开；华为/小米等自带日历一般支持。若点不动，把文件发到微信「文件传输助手」→ 手机点开 → 用其他应用打开 → 日历；或在电脑登录 calendar.google.com → 设置 → 导入。<br>'+
     '• Windows：双击 → 用「日历」或 Outlook 打开导入。<br>'+
-    '只导出<b>今天及以后</b>的提醒；提前天数与每天/隔天频率可在「日程」面板调整。导入后即为<b>系统级每日 10 点提醒</b>（面试前 2 小时额外提醒），不再依赖本网页。提醒时间可在日历 App 内修改事件闹钟调整。';
+    '只导出<b>今天及以后</b>的提醒；每条事项会从「提前 N 天」起按每天/隔天重复提醒直到当天，N 与频率在「日程」面板设置。导入后即为<b>系统级每日 10 点提醒</b>（面试前 2 小时额外提醒），不再依赖本网页。提醒时间可在日历 App 内修改事件闹钟调整。';
   exportFile("求职提醒_"+today+".ics",content,"text/calendar",help);
 }
 

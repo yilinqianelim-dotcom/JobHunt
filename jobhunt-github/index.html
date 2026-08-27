@@ -854,10 +854,7 @@ function updateAcctUI(){
     if(sbUser)document.getElementById('acctEmail').textContent=sbUser.email||'';}
 }
 function openAcct(){updateAcctUI();document.getElementById('acctMask').classList.add('show');}
-function closeAcct(){
-  if(!sbUser)lsSet(PREFIX+'skiplogin','1');
-  document.getElementById('acctMask').classList.remove('show');
-}
+function closeAcct(){document.getElementById('acctMask').classList.remove('show');}
 function skipLogin(){closeAcct();toast('本地模式：数据仅存本设备。随时点顶栏「登录」开启云同步');}
 function acctMsg(m){const e=document.getElementById('acctMsg');if(e)e.textContent=m||'';}
 function uname2email(u){return u.toLowerCase()+'@jobhunt.local';}
@@ -890,7 +887,7 @@ async function doSignup(){
     else acctMsg('注册成功，请直接点登录');
   }catch(e){acctMsg('网络异常，稍后再试');}
 }
-async function doLogout(){try{await ensureSB();await sb.auth.signOut();}catch(e){}sbUser=null;updateAcctUI();document.getElementById('acctMask').classList.remove('show');lsSet(PREFIX+'skiplogin','1');toast('已退出登录，本机数据保留');}
+async function doLogout(){try{await ensureSB();await sb.auth.signOut();}catch(e){}sbUser=null;updateAcctUI();document.getElementById('acctMask').classList.remove('show');toast('已退出登录，本机数据保留');}
 function localSnapshot(){return {jobs:load('jobs'),todo:load('todo'),reminder:load('reminder')};}
 function markDirty(){if(_seeding)return;lsSet(PREFIX+'dirty','1');lsSet(PREFIX+'lastmod',String(Date.now()));if(sbUser){clearTimeout(pushTimer);pushTimer=setTimeout(pushData,1500);}}
 async function pushData(){
@@ -1438,8 +1435,8 @@ applyTheme();
 seed();
 renderAll();
 if(hasSbSession()){
-  ensureSB().then(async()=>{const {data}=await sb.auth.getSession();sbUser=data&&data.session?data.session.user:null;updateAcctUI();if(sbUser)pullData();else if(lsGet(PREFIX+'skiplogin')!=='1')openAcct();}).catch(()=>{});
-}else if(lsGet(PREFIX+'skiplogin')!=='1'){openAcct();}
+  ensureSB().then(async()=>{const {data}=await sb.auth.getSession();sbUser=data&&data.session?data.session.user:null;updateAcctUI();if(sbUser)pullData();else openAcct();}).catch(()=>{});
+}else{openAcct();}
 /* 申请持久存储：降低 Safari/Chrome 在空间紧张或长期未访问时自动清除本站数据的概率 */
 if(navigator.storage&&navigator.storage.persist){navigator.storage.persist().catch(()=>{});}
 if(!storageOK()){

@@ -270,17 +270,21 @@
 <div class="modal-mask" id="acctMask" onclick="if(event.target===this)closeAcct()">
   <div class="modal" style="max-width:380px">
     <div id="acctOut">
-      <h3>登录 / 注册 <button class="x" onclick="closeAcct()">×</button></h3>
-      <div style="font-size:13px;color:var(--sub);margin:4px 0 12px;line-height:1.6">登录后记录自动同步云端，手机/电脑/微信里登同一账号即同一份数据。不登录也可正常使用（数据仅存本机）。</div>
+      <h3>欢迎使用 JobHunting <button class="x" id="acctX" onclick="closeAcct()" style="display:none">×</button></h3>
+      <div style="font-size:13px;color:var(--sub);margin:4px 0 12px;line-height:1.6">登录后记录自动云端同步：手机、电脑、微信登同一账号即同一份数据。<b>账号暂不支持找回密码，请妥善保管。</b></div>
       <div class="grid">
-        <div class="field full"><label>邮箱</label><input id="ac-email" type="email" placeholder="you@example.com"></div>
-        <div class="field full"><label>密码</label><input id="ac-pass" type="password" placeholder="至少 6 位"></div>
+        <div class="field full"><label>账号名</label><input id="ac-user" placeholder="3-20 位字母/数字/下划线" autocomplete="username"></div>
+        <div class="field full"><label>密码</label><input id="ac-pass" type="password" placeholder="至少 6 位" autocomplete="current-password"></div>
       </div>
       <div style="display:flex;gap:10px;margin-top:14px">
         <button class="save-btn" style="flex:1" onclick="doLogin()">登录</button>
         <button class="save-btn" style="flex:1;background:var(--card);color:var(--pri);border:1.5px solid var(--pri)" onclick="doSignup()">注册</button>
       </div>
       <div id="acctMsg" style="font-size:12.5px;color:var(--danger);margin-top:10px"></div>
+      <div style="text-align:center;margin-top:14px">
+        <span style="font-size:13px;color:var(--sub);cursor:pointer;text-decoration:underline" onclick="skipLogin()">暂不登录，先用本地模式 →</span>
+        <div style="font-size:11.5px;color:var(--sub);margin-top:5px">本地模式下数据仅存这台设备，换设备不同步</div>
+      </div>
     </div>
     <div id="acctIn" style="display:none">
       <h3>我的账号 <button class="x" onclick="closeAcct()">×</button></h3>
@@ -712,6 +716,7 @@ async function ensureSB(){
 }
 function hasSbSession(){try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf('sb-')===0&&k.indexOf('auth-token')>-1)return true;}}catch(e){}return false;}
 function updateAcctUI(){
+  const x=document.getElementById('acctX');if(x)x.style.display='';
   const b=document.getElementById('acctBtn');
   if(b)b.textContent=sbUser?('👤 '+(sbUser.email||'').split('@')[0]):'👤 登录';
   const out=document.getElementById('acctOut'),inn=document.getElementById('acctIn');
@@ -719,33 +724,43 @@ function updateAcctUI(){
     if(sbUser)document.getElementById('acctEmail').textContent=sbUser.email||'';}
 }
 function openAcct(){updateAcctUI();document.getElementById('acctMask').classList.add('show');}
-function closeAcct(){document.getElementById('acctMask').classList.remove('show');}
+function closeAcct(){
+  if(!sbUser)lsSet(PREFIX+'skiplogin','1');
+  document.getElementById('acctMask').classList.remove('show');
+}
+function skipLogin(){closeAcct();toast('本地模式：数据仅存本设备。随时点顶栏「登录」开启云同步');}
 function acctMsg(m){const e=document.getElementById('acctMsg');if(e)e.textContent=m||'';}
+function uname2email(u){return u.toLowerCase()+'@jobhunt.local';}
+function validUname(u){return /^[A-Za-z0-9_]{3,20}$/.test(u);}
 async function doLogin(){
-  const email=val('ac-email'),pass=document.getElementById('ac-pass').value;
-  if(!email||!pass){acctMsg('请填写邮箱和密码');return;}
+  const u=val('ac-user'),pass=document.getElementById('ac-pass').value;
+  if(!validUname(u)){acctMsg('账号名需为 3-20 位字母/数字/下划线');return;}
+  if(!pass){acctMsg('请填写密码');return;}
+  const email=uname2email(u);
   acctMsg('');
   try{
     await ensureSB();
     const {data,error}=await sb.auth.signInWithPassword({email,password:pass});
-    if(error){acctMsg(error.message.indexOf('Invalid')>-1?'邮箱或密码不对':'登录失败：'+error.message);return;}
+    if(error){acctMsg(error.message.indexOf('Invalid')>-1?'账号名或密码不对（新用户请点注册）':'登录失败：'+error.message);return;}
     sbUser=data.user;updateAcctUI();closeAcct();toast('登录成功，同步中…');
     await pullData();
   }catch(e){acctMsg('网络异常，稍后再试');}
 }
 async function doSignup(){
-  const email=val('ac-email'),pass=document.getElementById('ac-pass').value;
-  if(!email||!pass||pass.length<6){acctMsg('请填写邮箱和至少 6 位密码');return;}
+  const u=val('ac-user'),pass=document.getElementById('ac-pass').value;
+  if(!validUname(u)){acctMsg('账号名需为 3-20 位字母/数字/下划线');return;}
+  if(pass.length<6){acctMsg('密码至少 6 位');return;}
+  const email=uname2email(u);
   acctMsg('');
   try{
     await ensureSB();
     const {data,error}=await sb.auth.signUp({email,password:pass});
-    if(error){acctMsg('注册失败：'+error.message);return;}
+    if(error){acctMsg(error.message.indexOf('already')>-1?'这个账号名已被注册，换一个或直接登录':'注册失败：'+error.message);return;}
     if(data.session){sbUser=data.user;updateAcctUI();closeAcct();toast('注册成功，云同步已开启');await pullData();}
-    else acctMsg('注册成功！请去邮箱点确认邮件后回来登录');
+    else acctMsg('注册成功，请直接点登录');
   }catch(e){acctMsg('网络异常，稍后再试');}
 }
-async function doLogout(){try{await ensureSB();await sb.auth.signOut();}catch(e){}sbUser=null;updateAcctUI();closeAcct();toast('已退出，数据保留在本机');}
+async function doLogout(){try{await ensureSB();await sb.auth.signOut();}catch(e){}sbUser=null;updateAcctUI();document.getElementById('acctMask').classList.remove('show');lsSet(PREFIX+'skiplogin','1');toast('已退出登录，本机数据保留');}
 function localSnapshot(){return {jobs:load('jobs'),todo:load('todo'),reminder:load('reminder')};}
 function markDirty(){lsSet(PREFIX+'lastmod',String(Date.now()));if(sbUser){clearTimeout(pushTimer);pushTimer=setTimeout(pushData,1500);}}
 async function pushData(){
@@ -1277,7 +1292,9 @@ function renderAll(){renderBoard();renderStats();renderImportant();renderSched()
 applyTheme();
 seed();
 renderAll();
-if(hasSbSession()){ensureSB().then(async()=>{const {data}=await sb.auth.getSession();sbUser=data&&data.session?data.session.user:null;updateAcctUI();if(sbUser)pullData();}).catch(()=>{});}
+if(hasSbSession()){
+  ensureSB().then(async()=>{const {data}=await sb.auth.getSession();sbUser=data&&data.session?data.session.user:null;updateAcctUI();if(sbUser)pullData();else if(lsGet(PREFIX+'skiplogin')!=='1')openAcct();}).catch(()=>{});
+}else if(lsGet(PREFIX+'skiplogin')!=='1'){openAcct();}
 /* 申请持久存储：降低 Safari/Chrome 在空间紧张或长期未访问时自动清除本站数据的概率 */
 if(navigator.storage&&navigator.storage.persist){navigator.storage.persist().catch(()=>{});}
 if(!storageOK()){

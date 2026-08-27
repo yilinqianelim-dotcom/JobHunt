@@ -888,29 +888,39 @@ async function doSignup(){
 }
 async function doLogout(){try{await ensureSB();await sb.auth.signOut();}catch(e){}sbUser=null;updateAcctUI();document.getElementById('acctMask').classList.remove('show');lsSet(PREFIX+'skiplogin','1');toast('已退出登录，本机数据保留');}
 function localSnapshot(){return {jobs:load('jobs'),todo:load('todo'),reminder:load('reminder')};}
-function markDirty(){lsSet(PREFIX+'lastmod',String(Date.now()));if(sbUser){clearTimeout(pushTimer);pushTimer=setTimeout(pushData,1500);}}
+function markDirty(){if(_seeding)return;lsSet(PREFIX+'dirty','1');lsSet(PREFIX+'lastmod',String(Date.now()));if(sbUser){clearTimeout(pushTimer);pushTimer=setTimeout(pushData,1500);}}
 async function pushData(){
   if(!sbUser)return;
-  try{await sb.from('user_data').upsert({user_id:sbUser.id,data:localSnapshot(),updated_at:new Date().toISOString()});
-    const e=document.getElementById('syncText');if(e)e.textContent='已同步云端';}catch(e){}
+  try{
+    const {error}=await sb.from('user_data').upsert({user_id:sbUser.id,data:localSnapshot(),updated_at:new Date().toISOString()});
+    if(error){toast('云同步失败：'+error.message);return;}
+    const e=document.getElementById('syncText');if(e)e.textContent='已同步云端';
+  }catch(e){toast('云同步失败：网络异常');}
 }
 async function pullData(){
   if(!sbUser)return;
   try{
     const {data,error}=await sb.from('user_data').select('data,updated_at').eq('user_id',sbUser.id).maybeSingle();
-    if(error)return;
-    const localMod=parseInt(lsGet(PREFIX+'lastmod')||'0',10);
-    if(!data){if(localMod)pushData();return;}
-    const remoteMod=new Date(data.updated_at).getTime();
-    if(remoteMod>=localMod){
-      const d=data.data||{};
-      if(Array.isArray(d.jobs))lsSet(COLS.jobs,JSON.stringify(d.jobs));
-      if(Array.isArray(d.todo))lsSet(COLS.todo,JSON.stringify(d.todo));
-      if(Array.isArray(d.reminder))lsSet(COLS.reminder,JSON.stringify(d.reminder));
-      lsSet(COLS.sample,'1');lsSet(PREFIX+'lastmod',String(remoteMod));
-      renderAll();toast('已从云端同步最新数据');
-    }else pushData();
-  }catch(e){}
+    if(error){toast('云同步失败：'+error.message+'（若提示表不存在请联系开发者）');return;}
+    const dirty=lsGet(PREFIX+'dirty')==='1';
+    if(!data){if(dirty)pushData();return;}
+    const d=data.data||{};
+    if(!dirty){
+      /* 本机只有示例/全新 → 云端直接覆盖 */
+      ['jobs','todo','reminder'].forEach(c=>{if(Array.isArray(d[c]))lsSet(COLS[c],JSON.stringify(d[c]));});
+      lsSet(COLS.sample,'1');renderAll();toast('已从云端同步你的记录');
+    }else{
+      /* 本机有手动录入 → 按 id 合并（同 id 以云端为准），合并结果回推云端 */
+      ['jobs','todo','reminder'].forEach(c=>{
+        const remote=Array.isArray(d[c])?d[c]:[];
+        const ids=new Set(remote.map(x=>x&&x.id));
+        const localOnly=load(c).filter(x=>x&&!ids.has(x.id));
+        lsSet(COLS[c],JSON.stringify(remote.concat(localOnly)));
+      });
+      lsSet(COLS.sample,'1');renderAll();toast('已合并本机与云端记录');
+      pushData();
+    }
+  }catch(e){toast('云同步失败：网络异常');}
 }
 async function manualSync(){toast('同步中…');await pushData();await pullData();toast('同步完成');}
 /* 反馈 */
@@ -1390,8 +1400,10 @@ function clearSample(){uiConfirm("确定清空所有数据？此操作不可撤�
   lsSet(COLS.sample,"1");renderAll();toast("已清空");});}
 
 /* 初始化示例（统一流水线） */
+let _seeding=false;
 function seed(){
   if(lsGet(COLS.sample)==="1")return;
+  _seeding=true;
   const t=todayStr();const d=new Date();d.setDate(d.getDate()-2);const od=fmtDate(d);
   const f=new Date();f.setDate(f.getDate()+3);const fd=fmtDate(f);
   const f2=new Date();f2.setDate(f2.getDate()+5);const fd2=fmtDate(f2);
@@ -1414,6 +1426,7 @@ function seed(){
     {id:uid(),title:"行测笔试练习",date:fd,kind:"笔试",note:"每周2套，保持手感",createdAt:Date.now()-200}
   ]);
   lsSet(COLS.sample,"1");
+  _seeding=false;
 }
 function renderAll(){renderBoard();renderStats();renderImportant();renderSched();renderAnalytics();}
 

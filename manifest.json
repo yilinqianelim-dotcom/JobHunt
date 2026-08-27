@@ -1,6 +1,6 @@
 {
-  "name": "求职记录台",
-  "short_name": "求职台",
+  "name": "JobHunting",
+  "short_name": "JobHunting",
   "description": "毕业求职投递 / 面试 / Offer 记录看板",
   "start_url": "./",
   "scope": "./",

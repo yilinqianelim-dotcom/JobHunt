@@ -434,10 +434,10 @@
           <textarea id="ap-jd" rows="2" placeholder="粘贴职位描述，或点下方「截图识别」上传招聘软件截图，自动识别薪资和岗位要求"></textarea>
           <div style="display:flex;gap:8px;align-items:center;margin-top:6px;flex-wrap:wrap">
             <button type="button" class="ph-act" onclick="smartParse()">识别并填充</button>
-            <button type="button" class="ph-act" onclick="document.getElementById('ap-shot').click()">截图识别</button>
+            <button type="button" class="ph-act" onclick="document.getElementById('ap-shot').click()">截图识别（可多选）</button>
             <span id="ocrStatus" style="font-size:12px;color:var(--sub)"></span>
           </div>
-          <input type="file" id="ap-shot" accept="image/*" style="display:none" onchange="ocrShot(event)">
+          <input type="file" id="ap-shot" accept="image/*" multiple style="display:none" onchange="ocrShot(event)">
         </div>
         <div class="field"><label>公司名称</label><input id="ap-company" placeholder="如 字节跳动"></div>
         <div class="field"><label>应聘岗位</label><input id="ap-position" placeholder="如 后端开发"></div>
@@ -1029,22 +1029,30 @@ function shrinkImg(file){return new Promise(res=>{const img=new Image();
     const c=document.createElement('canvas');c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);
     c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(img.src);res(c);};
   img.onerror=()=>res(file);img.src=URL.createObjectURL(file);});}
-async function ocrShot(e){
-  const f=e.target.files[0];e.target.value='';if(!f)return;
+async function ocrShot(ev){
+  let files=Array.from(ev.target.files||[]);ev.target.value='';
+  if(!files.length)return;
+  if(files.length>5){files=files.slice(0,5);toast('最多一次识别 5 张，已取前 5 张');}
   try{
     setOcr(window.Tesseract?'启动识别…':'首次使用需下载识别组件(约10MB)…');
     await ensureTess();
-    const src=await shrinkImg(f);
+    let idx=0;
     const worker=await Tesseract.createWorker('chi_sim',1,{logger:m=>{
-      if(m.status==='recognizing text')setOcr('识别中 '+Math.round((m.progress||0)*100)+'%');
+      if(m.status==='recognizing text')setOcr('识别第 '+(idx+1)+'/'+files.length+' 张 '+Math.round((m.progress||0)*100)+'%');
       else if(m.status)setOcr('加载组件中…');}});
-    const r=await worker.recognize(src);
+    const all=[];
+    for(idx=0;idx<files.length;idx++){
+      const src=await shrinkImg(files[idx]);
+      const r=await worker.recognize(src);
+      const t=(r.data.text||'').replace(/[ \t]+/g,' ').trim();
+      if(t)all.push(t);
+    }
     await worker.terminate();
-    const text=(r.data.text||'').replace(/[ \t]+/g,' ').trim();
     setOcr('');
-    if(!text){toast('没识别到文字，换张更清晰的截图试试');return;}
+    if(!all.length){toast('没识别到文字，换更清晰的截图试试');return;}
     const ta=document.getElementById('ap-jd');
-    ta.value=(ta.value?ta.value+'\n':'')+text;
+    ta.value=(ta.value?ta.value+'\n':'')+all.join('\n');
+    if(files.length>1)toast('已识别 '+all.length+' 张截图，正在分析…');
     smartParse();
   }catch(err){
     setOcr('');

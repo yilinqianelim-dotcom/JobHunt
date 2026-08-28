@@ -1,6 +1,6 @@
 // 求职记录台 Service Worker
 // 改版发布时请把下面的版本号 +1（如 jobhunt-v3），旧缓存会自动清除
-const CACHE='jobhunt-v26';
+const CACHE='jobhunt-v27';
 const ASSETS=['./','./index.html','./manifest.json','./icon.svg','./icon-192.png','./icon-512.png','./apple-touch-icon.png'];
 
 self.addEventListener('install',e=>{
